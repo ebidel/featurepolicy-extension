@@ -1,0 +1,122 @@
+* {
+  box-sizing: border-box;
+}
+:root {
+  --default-padding: 16px;
+  --md-blue-900-dark: #002171;
+  --md-blue-900-primary: #0d47a1;
+  --md-blue-900-light: #5472d3;
+}
+body {
+  /* font-family: "Roboto", "Google Sans", sans-serif; */
+  font-family: "Google Sans", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding: var(--default-padding);
+  /* max-width: 800px; */
+  /* font-size: 13px; */
+  font-size: 14px;
+  line-height: 18px;
+  color: rgb(48, 57, 66);
+}
+#policy-lists label {
+  /* user-select: none; */
+  font-weight: 500;
+  margin-right: calc(var(--default-padding) / 2);
+  color: var(--md-blue-900-primary);
+}
+ul {
+  list-style: none;
+  padding: 0;
+}
+a {
+  color: var(--md-blue-900-light);
+}
+h1, h2, h3 {
+  font-weight: inherit;
+  margin-top: 0;
+  color: var(--md-blue-900-dark);
+}
+.title {
+  font-size: 28px;
+  margin-bottom: 0;
+}
+.subtitle {
+  color: inherit;
+}
+#sidebar {
+  flex: 0 0 350px;
+  padding-right: calc(var(--default-padding) / 2);
+}
+.summary {
+  /* font-style: italic; */
+  /* font-size: 12px; */
+  color: #757575;
+  margin: var(--default-padding) 0;
+}
+#settings > * {
+  margin: var(--default-padding) 0;
+}
+#error-msg {
+  padding: calc(var(--default-padding) / 2);
+  margin-bottom: var(--default-padding);
+  border-radius: 3px;
+  border: 1px solid red;
+  color: red;
+  display: none;
+}
+#error-msg.show {
+  display: inline-block;
+}
+.layout {
+  display: flex;
+}
+.flex {
+  flex: 1 1 auto;
+}
+.border-right {
+  border-right: 1px solid #ebebeb;
+}
+#policy-lists {
+  padding: 0 var(--default-padding);
+}
+/* .policy-list {
+  padding: 0 var(--default-padding);
+}
+.policy-list:first-of-type {
+  padding-left: 0;
+} */
+#policy-lists th {
+  text-align: left;
+}
+/* #active-policies {
+  column-count: 2;
+  column-rule: 1px solid #ebebeb;
+  column-gap: calc(var(--default-padding) * 2);
+} */
+.allowed-check {
+  display: inline-block;
+  background-size: contain;
+  width: 16px;
+  height: 16px;
+}
+.allowed-check[data-allowed="true"] {
+  background: url(img/check-24px.svg) no-repeat 50% 50%;
+}
+.allowed-check[data-allowed="false"] {
+  background: url(img/close-24px.svg) no-repeat 50% 50%;
+}
+.instructions {
+  margin-bottom: var(--default-padding);
+  color: #757575;
+  font-style: italic;
+}
+button {
+  background: none;
+  padding: calc(var(--default-padding) / 2);
+  border: 0;
+  border-radius: 3px;
+  font-size: inherit;
+  background-color: #4285F4;
+  color: #fff;
+  font-weight: 500;
+}

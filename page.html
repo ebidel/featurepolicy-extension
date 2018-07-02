@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<main class="layout">
+  <section id="sidebar" class="border-right">
+    <hgroup>
+      <h1 class="title">Feature Policy Tester</h1>
+      <!-- <h2 class="subtitle">tester</h2> -->
+    </hgroup>
+    <div class="summary">
+      <a href="https://wicg.github.io/feature-policy/" target="_blank">Feature Policy</a> can be
+      used to selectively enable, disable, and modify the behavior of various features and APIs
+      in the browser. This can provide a well-lit path towards good performance and prevent common
+      footguns when building or maintaining a site.
+      <br><br>
+      Learn more about Feature Policy on <a href="https://developers.google.com/web/updates/2018/06/feature-policy" target="_blank">developers.google.com</a>
+      or visit the <a href="https://feature-policy-demos.appspot.com/" target="_blank">demos</a>.
+    </div>
+    <div id="settings">
+      <h3>Settings</h3>
+      <div>
+        <label>
+          <input type="checkbox" id="persist-on-reload" checked>Persist policy customizations across page reload / navigations
+        </label>
+      </div>
+      <div>
+        <button id="restore-button">Restore page's original policies</button>
+      </div>
+    </div>
+  </section>
+  <div id="policy-lists">
+    <div class="instructions">Instructions: toggle the feature polices below to see how they effect the page.</div>
+    <div id="error-msg"></div>
+    <div class="layout">
+      <div class="policy-list">
+        <h2>Status</h2>
+        <div id="active-policies"></div>
+      </div>
+      <!-- <div class="policy-list">
+        <h2>Disallowed policies</h2>
+        <div id="unused-policies"></div>
+      </div> -->
+    </div>
+  </div>
+</main>
+
+<script type="module" src="panel.js"></script>
+</body>
+</html>

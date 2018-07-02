@@ -1,0 +1,14 @@
+{
+  "name": "feature-policy-extension",
+  "version": "0.0.1",
+  "description": "DevTools extension to test Feature Policy settings",
+  "main": "panel.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Eric Bidelman <ebidel@>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "lit-html": "^0.10.2"
+  }
+}

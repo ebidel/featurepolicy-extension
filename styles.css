@@ -72,6 +72,13 @@ h1, h2, h3 {
 #settings > * {
   margin: var(--default-padding) 0;
 }
+#settings label {
+  font-weight: 500;
+}
+#settings .hint {
+  font-style: italic;
+  font-size: 12px;
+}
 #error-msg {
   padding: calc(var(--default-padding) / 2);
   margin-bottom: var(--default-padding);
@@ -91,6 +98,9 @@ h1, h2, h3 {
 }
 .border-right {
   border-right: 1px solid #ebebeb;
+}
+.border-botton {
+  border-bottom: 1px solid #ebebeb;
 }
 #policy-lists {
   padding: 0 var(--default-padding);
@@ -135,4 +145,11 @@ button {
   background-color: #4285F4;
   color: #fff;
   font-weight: 500;
+}
+output {
+  display: none;
+}
+body.debug output {
+  white-space: pre;
+  display: block;
 }

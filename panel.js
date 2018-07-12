@@ -16,8 +16,7 @@
 
 import {html, render} from './node_modules/lit-html/lib/lit-extended.js';
 import {repeat} from './node_modules/lit-html/lib/repeat.js';
-
-const FP_HEADER = 'Feature-Policy';
+// import './pptr-crx.js';
 
 const persisteAcrossReload = document.querySelector('#persist-on-reload');
 const activePoliciesEl = document.querySelector('#active-policies');
@@ -27,6 +26,7 @@ const restoreButton = document.querySelector('#restore-button');
 let _allFeaturePolicies = []; /* Array<string> all feature policy names supported by the browser. */
 let _originalPoliciesUsedOnPage = {};
 let _customizedPolicies = {};
+let _oldUrl = null; // previous url of inspected tab after a reload/navigation.
 
 function getFeaturePolicyAllowListOnPage(features) {
   const map = {};
@@ -34,7 +34,6 @@ function getFeaturePolicyAllowListOnPage(features) {
     map[feature] = {
       allowed: document.policy.allowsFeature(feature),
       allowList: document.policy.getAllowlistForFeature(feature),
-      customized: false,
     };
   }
   return map;
@@ -61,24 +60,7 @@ function getBackgroundPage() {
 
 const UI = {
   togglePolicy(e) {
-    //const feature = policyManager.customizedPolicies[e.target.value];
-    // const feature = policyManager.originalPoliciesSetByPage[e.target.value];
-    // feature.allowed = e.target.checked;
-
-    // const feature = policyManager.customizedPolicies[e.target.value];
-    // if (feature) {
-    //   feature.customized = false;
-    //   feature.allowed = policyManager.originalPoliciesSetByPage[e.target.value].allowed;
-    //   feature.allowList = policyManager.originalPoliciesSetByPage[e.target.value].allowList;
-    // } else {
-    //   policyManager.customizedPolicies[e.target.value] = {
-    //     allowed: e.target.checked,
-    //     allowList: [],
-    //     customized: true,
-    //   };
-    // }
     policyManager.togglePolicyOnPage(e.target.value);
-
     UI.updateDOMLists();
     reloadPage();
   },
@@ -99,7 +81,7 @@ const UI = {
           <tr>
             <th colspan="2">Name</th><th>Allowed by page</th><th>Allowed origins</th>
           </tr>
-          ${repeat(features, ([feature, val]) => feature, ([feature, val], i) => {
+          ${repeat(features, null, ([feature, val], i) => {
             return html`
               <tr data-feature$="${feature}">
                 <td>
@@ -120,13 +102,22 @@ const UI = {
 
     const featureList = policyManager.buildCustomizedPolicyList();
     render(buildList(Object.entries(featureList)), activePoliciesEl);
+  },
+
+  debugResponseHeaders(responseHeaders) {
+    const out = document.querySelector('output');
+    out.innerHTML = responseHeaders.reduce((accum, curr) => {
+      accum += `${JSON.stringify(curr)}\n`;
+      return accum;
+    }, '');
   }
 };
 
 class FeaturePolicyMananger {
   get allFeaturePoliciesSupportedByBrowser() {
     if (!_allFeaturePolicies.length) {
-      console.warn('List of feature policies supported by the browser was not set.');
+      console.warn(
+        'List of feature policies supported by the browser was not set.');
     }
     return _allFeaturePolicies || [];
   }
@@ -153,10 +144,11 @@ class FeaturePolicyMananger {
 
   restoreOriginalPoliciesSetByPage() {
     this.customizedPolicies = {};
-    UI.updateDOMLists(this.originalPoliciesSetByPage);
+    this.originalPoliciesSetByPage = {};
+    UI.updateDOMLists();
   }
 
-  buildCustomizedPolicyList(featureList) {
+  buildCustomizedPolicyList() {
     const list = JSON.parse(JSON.stringify(this.originalPoliciesSetByPage));
     Object.entries(list).forEach(([feature, val]) => {
       if (this.customizedPolicies[feature]) {
@@ -167,7 +159,8 @@ class FeaturePolicyMananger {
   }
 
   getFeaturePolicies() {
-    // Inject the _getFeaturePolicyAllowListOnPage function into the page and return its eval'd result.
+    // Inject the _getFeaturePolicyAllowListOnPage function into the page
+    // and return its eval'd result.
     const expression = `(function() {
       ${getFeaturePolicyAllowListOnPage.toString()};
       const allPolicies = ${JSON.stringify(this.allFeaturePoliciesSupportedByBrowser)};
@@ -193,17 +186,16 @@ class FeaturePolicyMananger {
   }
 
   togglePolicyOnPage(policyName) {
-    const feature = this.customizedPolicies[policyName];
-    if (feature) {
-      delete this.customizedPolicies[policyName];
-      // feature.customized = false;
-      // feature.allowed = this.originalPoliciesSetByPage[policyName].allowed;
-      // feature.allowList = this.originalPoliciesSetByPage[policyName].allowList;
+    const customizedFeature = this.customizedPolicies[policyName];
+    if (customizedFeature) {
+      const newAllowed = !customizedFeature.allowed;
+      customizedFeature.allowed = newAllowed;
+      customizedFeature.allowList = [newAllowed ? "*" : "'none'"];
     } else {
+      const newAllowed = !this.originalPoliciesSetByPage[policyName].allowed;
       this.customizedPolicies[policyName] = {
-        // allowed: true,
-        allowList: ["'none'"],
-        customized: true,
+        allowed: newAllowed,
+        allowList: [newAllowed ? "*" : "'none'"],
       };
     }
   }
@@ -212,43 +204,53 @@ class FeaturePolicyMananger {
 const policyManager = new FeaturePolicyMananger();
 
 // Refresh policy lists if page is navigated.
-chrome.devtools.network.onNavigated.addListener(url => {
+chrome.devtools.network.onNavigated.addListener(newUrl => {
+  const navigatedToDifferentPage = _oldUrl !== newUrl;
+  const persistSettings = persisteAcrossReload.checked;
+
+  _oldUrl = newUrl;
+
+  if (navigatedToDifferentPage && !persistSettings) {
+    policyManager.restoreOriginalPoliciesSetByPage();
+    // Refresh page so chrome.webRequest.onHeadersReceived can run in
+    // background page update remove/restore the headers accordingly. The UI
+    // then updates the feature list when this handler runs again.
+    reloadPage();
+    return; // Prevent rest of handler from being run.
+  }
+
   policyManager.getFeaturePolicies();
 });
 
 // Create "Feature Policies" Devtools panel.
 chrome.devtools.panels.create('Feature Policy', null, 'page.html', async panel => {
-
-  // // From https://stackoverflow.com/questions/18310484/modify-http-responses-from-a-chrome-extension/45220932#
-  // chrome.debugger.getTargets(targets => {
-  //   const target = /* Find the target. */;
-  //   const debuggee = {targetId: target.id};
-
-  //   chrome.debugger.attach(debuggee, '1.3', () => {
-  //     chrome.debugger.sendCommand(debuggee, 'Network.setRequestInterception', {urlPattern: '*'});
-  //   });
-
-  //   chrome.debugger.onEvent.addListener((source, method, params) => {
-  //     if (source.targetId === target.id && method === 'Network.requestIntercepted') {
-  //       // TODO
-
-  //       chrome.debugger.detach(target, () => {
-
-  //       });
-  //     }
-  //   });
+  // panel.onShown.addListener(() => {
+  //   // bgPage.log('panel.onShown');
+  //   policyManager.restoreOriginalPoliciesSetByPage();
+  // });
+  // panel.onHidden.addListener(() => {
+  //   // bgPage.log('panel.onHidden');
   // });
 
-  // panel.onShown.addListener(() => { });
-  // panel.onHidden.addListener(() => { });
-
   if (!('policy' in document)) {
-    UI.displayError('This extension requires the Feature Policy JS API to work (e.g. `document.policy`). Please turn it on in --enable-experimental-web-platform-features flag in about:flags.');
+    UI.displayError(
+      `This extension requires the Feature Policy JS API to work
+      (e.g. document.policy). Please turn it on in
+      --enable-experimental-web-platform-features flag in about:flags.`);
   }
 
   const bgPage = await getBackgroundPage();
+  const tab = await bgPage.getCurrentTab();
+  if (!tab.url) {
+    UI.displayError(`Initial url was not populated by tab.url.
+      Check manifest 'tabs' permission`);
+  }
+  _oldUrl = tab.url; // Set initial URL being inspected..
+
   policyManager.allFeaturePoliciesSupportedByBrowser = bgPage.getAllFeaturePolicies();
   policyManager.getFeaturePolicies();
+
+  bgPage.setPolicyManager(chrome.devtools.inspectedWindow.tabId, policyManager);
 
   restoreButton.addEventListener('click', e => {
     policyManager.restoreOriginalPoliciesSetByPage();
@@ -257,46 +259,24 @@ chrome.devtools.panels.create('Feature Policy', null, 'page.html', async panel =
 });
 
 
-chrome.webRequest.onHeadersReceived.addListener(details => {
-  // If it is not the top-frame, we just ignore it.
-  if (details.frameId !== 0 || chrome.devtools.inspectedWindow.tabId !== details.tabId) {
-    return;
-  }
 
-  const responseHeaders = [];
-  const collectedFPHeaderVals = [];
+// chrome.webRequest.onCompleted.addListener(details => {
+//   //UI.debugResponseHeaders(details.responseHeaders);
+//   console.log('onCompleted', details);
+// }, {urls: ['<all_urls>'], types: ['main_frame']}, ['responseHeaders']);
 
-  // Preserve headers sent by page and collect separate Feature-Policy headers
-  // into an aggreated, single header.
-  details.responseHeaders.forEach((header, i) => {
-    if (header.name === FP_HEADER) {
-      collectedFPHeaderVals.push(header.value);
-    } else {
-      responseHeaders.push(header);
-    }
-  });
+const bgPageConnection = chrome.runtime.connect({name: 'devtools-page'});
+bgPageConnection.postMessage({
+  name: 'init',
+  tabId: chrome.devtools.inspectedWindow.tabId,
+});
 
-  for (const [key, val] of Object.entries(policyManager.customizedPolicies)) {
-    collectedFPHeaderVals.push(`${key} ${val.allowList.join(' ')}`);
-  }
+window.UI = UI;
+window.policyManager = policyManager;
 
-  if (collectedFPHeaderVals.length) {
-    // Note: the DevTools network panel won't show the updated response headers
-    // but our changes will work. The panel shows the original headers as seen
-    // from the network. See https://crbug.com258064.
-    // TODO: figure out how to communicate this to users. It'll be confusing
-    // if they check the DevTools and it doesn't show correct values.
-    responseHeaders.push({
-      name: FP_HEADER,
-      value: collectedFPHeaderVals.join('; ')
-    });
-  }
+// bgPageConnection.onMessage.addListener((message, sender, sendResponse) => {
+//   if (message.name === 'getPagePolicies') {
+//     bgPageConnection.postMessage({customizedPolicies: policyManager.customizedPolicies});
+//   }
+// });
 
-  return {responseHeaders};
-}, {urls: ['<all_urls>'], types: ['main_frame']}, ['blocking', 'responseHeaders']);
-
-
-// chrome.webRequest.onResponseStarted.addListener(details => {
-chrome.webRequest.onCompleted.addListener(details => {
-  console.log('onCompleted', details)
-}, {urls: ['<all_urls>'], types: ['main_frame']}, ['responseHeaders']);

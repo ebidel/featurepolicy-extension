@@ -37,18 +37,24 @@ limitations under the License.
     </div>
     <div id="settings">
       <h3>Settings</h3>
-      <div>
+      <div class="border-botton">
         <label>
-          <input type="checkbox" id="persist-on-reload" checked>Persist policy customizations across page reload / navigations
+          <input type="checkbox" id="persist-on-reload">Persist policy selections across page navigations
         </label>
+        <p class="hint">Help: By default, refreshing the same page will continue to use any feature
+        policy settings you customize to the right. To persist these selections
+        across navigations to different pages, check the box above.</p>
       </div>
       <div>
-        <button id="restore-button">Restore page's original policies</button>
+        <button id="restore-button">Restore policies sent by server</button>
+        <p class="hint">Help: Restores the original feature policies sent by the server and removes
+        any customized values to the right.</p>
       </div>
     </div>
   </section>
   <div id="policy-lists">
-    <div class="instructions">Instructions: toggle the feature polices below to see how they effect the page.</div>
+    <div class="instructions">Instructions: toggle the feature polices below to see how
+    they effect the page. The page will automatically refresh.</div>
     <div id="error-msg"></div>
     <div class="layout">
       <div class="policy-list">
@@ -62,6 +68,8 @@ limitations under the License.
     </div>
   </div>
 </main>
+
+<output></output>
 
 <script type="module" src="panel.js"></script>
 </body>

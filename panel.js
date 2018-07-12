@@ -91,7 +91,7 @@ const UI = {
                 <td><label for$="${feature}-check">${feature}</label></td>
                 <td><span class="allowed-check" data-allowed$="${val.allowed}"></span></td>
                 <td>
-                  <span>${val.allowList.length ? val.allowList : ''}</span>
+                  <span>${val.allowList.length ? val.allowList.join(', ') : ''}</span>
                 </td>
               </tr>`;
             }

@@ -83,10 +83,11 @@ const UI = {
           </tr>
           ${repeat(features, null, ([feature, val], i) => {
             return html`
-              <tr data-feature$="${feature}">
+              <tr data-feature$="${feature}" data-allowed$="${val.allowed}">
                 <td>
                   <input type="checkbox" id$="${feature}-check" checked="${val.allowed}"
-                         on-input="${UI.togglePolicy}" value="${feature}">
+                         on-input="${UI.togglePolicy}" value="${feature}"
+                         class="fp-toggle-input">
                 </td>
                 <td><label for$="${feature}-check">${feature}</label></td>
                 <td><span class="allowed-check" data-allowed$="${val.allowed}"></span></td>

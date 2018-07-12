@@ -39,6 +39,7 @@ body {
   font-weight: 500;
   margin-right: calc(var(--default-padding) / 2);
   color: var(--md-blue-900-primary);
+  cursor: pointer;
 }
 ul {
   list-style: none;
@@ -105,14 +106,15 @@ h1, h2, h3 {
 #policy-lists {
   padding: 0 var(--default-padding);
 }
-/* .policy-list {
-  padding: 0 var(--default-padding);
+.policy-list .fp-toggle-input {
+  display: none;
 }
-.policy-list:first-of-type {
-  padding-left: 0;
-} */
+[data-feature][data-allowed="false"] {
+  opacity: 0.6;
+}
 #policy-lists th {
   text-align: left;
+  padding-right: var(--default-padding);
 }
 /* #active-policies {
   column-count: 2;

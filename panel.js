@@ -30,10 +30,11 @@ let _oldUrl = null; // previous url of inspected tab after a reload/navigation.
 
 function getFeaturePolicyAllowListOnPage(features) {
   const map = {};
+  const featurePolicy = document.policy || document.featurePolicy;
   for (const feature of features) {
     map[feature] = {
-      allowed: document.policy.allowsFeature(feature),
-      allowList: document.policy.getAllowlistForFeature(feature),
+      allowed: featurePolicy.allowsFeature(feature),
+      allowList: featurePolicy.getAllowlistForFeature(feature),
     };
   }
   return map;
@@ -236,8 +237,8 @@ chrome.devtools.panels.create('Feature Policy', null, 'page.html', async panel =
   if (!('policy' in document)) {
     UI.displayError(
       `This extension requires the Feature Policy JS API to work
-      (e.g. document.policy). Please turn it on in
-      --enable-experimental-web-platform-features flag in about:flags.`);
+      (e.g. document.featurePolicy or the older document.policy).
+      Please turn it on in --enable-experimental-web-platform-features flag in about:flags.`);
   }
 
   const bgPage = await getBackgroundPage();

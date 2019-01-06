@@ -16,7 +16,8 @@ function log(msg) {
 }
 
 function getAllFeaturePolicies() {
-  return document.policy.allowedFeatures();
+  const featurePolicy = document.policy || document.featurePolicy;
+  return featurePolicy.allowedFeatures();
 }
 
 async function getCurrentTab() {
